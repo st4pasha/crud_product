@@ -1,23 +1,28 @@
 package handlers
 
 import (
-	"crud_product/app/service"
 	"crud_product/app/models"
-	"crud_product/app/repositories"
+	"crud_product/app/service"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"github.com/gorilla/mux"
 )
 
 func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
-	productsBytes, err := json.Marshal(repositories.Products)
+	products := service.GetProducts()
+
+	productsBytes, err := json.Marshal(products)
 	if err != nil {
-		fmt.Printf("error, %v\n", err)
+		fmt.Printf("error, %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if _, err = w.Write(productsBytes); err != nil {
-		fmt.Printf("error, %v\n", err)
+
+	if _, err := w.Write(productsBytes); err != nil {
+		fmt.Printf("error, %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
@@ -31,19 +36,16 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validatedProduct, err := service.ValidProduct(product)
-	if err != nil {
-		fmt.Printf("error, %v\n", err)
+	if err := service.AddValidProductToRepositories(product); err != nil {
+		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	repositories.Products[validatedProduct.Id] = &validatedProduct
-
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte("Создан новый продукт с названием: , " + *product.Title))
-	if err != nil {
-		fmt.Printf("error, %v\n", err)
+
+	if _, err := w.Write([]byte("Создан продукт с id " + product.Id + " и названием " + product.Title)); err != nil {
+		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -59,15 +61,14 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for key, product := range repositories.Products {
-		if product.Id == product_id {
-			delete(repositories.Products, key)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	_, err := service.DeleteProduct(product_id)
+	if err != nil {
+		fmt.Printf("error, %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
@@ -80,31 +81,14 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for key, product := range repositories.Products {
-		if product.Id == productUpdate.Id {
-			if productUpdate.Price != nil && *product.Price > 0 {
-				repositories.Products[key].Price = productUpdate.Price
-			}
-
-			if productUpdate.Title != nil {
-				repositories.Products[key].Title = productUpdate.Title
-			}
-
-			w.WriteHeader(http.StatusOK)
-			if _, err := w.Write([]byte("Продукт успешно изменён")); err != nil {
-				fmt.Printf("invalid id, %v\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			return
-
-		}
+	if err := service.UpdateProduct(productUpdate); err != nil {
+		fmt.Printf("error, %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
-	if _, err := w.Write([]byte("Продукт не найден")); err != nil {
-		fmt.Printf("invalid id, %v\n", err)
+	if _, err := w.Write([]byte("Продукт успешно обновлен")); err != nil {
+		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -114,11 +98,16 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 func handleGetById(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)
 
-	id := path["id"]
-
-	product, ok := repositories.Products[id]
+	id, ok := path["id"]
 	if !ok {
 		fmt.Println("invalid id")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	product, err := service.GetProductById(id)
+	if err != nil {
+		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
