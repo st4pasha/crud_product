@@ -1,7 +1,7 @@
 package main
 
-import "crud_product/app/service"
+import "crud_product/app/handlers"
 
 func main() {
-	service.StartServer()
+	handlers.StartServer()
 }

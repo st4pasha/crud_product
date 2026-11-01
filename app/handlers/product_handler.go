@@ -1,12 +1,12 @@
-package service
+package handlers
 
 import (
+	"crud_product/app/service"
 	"crud_product/app/models"
 	"crud_product/app/repositories"
 	"encoding/json"
 	"fmt"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +31,7 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validatedProduct, err := models.ValidProduct(product)
+	validatedProduct, err := service.ValidProduct(product)
 	if err != nil {
 		fmt.Printf("error, %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -126,6 +126,22 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(product); err != nil {
 		fmt.Printf("invalid id, %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func StartServer() {
+
+	mux := mux.NewRouter()
+
+	mux.HandleFunc("/products/{id}", handleGetById).Methods("GET")
+	mux.HandleFunc("/products", handleGetProducts).Methods("GET")
+	mux.HandleFunc("/products", handlerCreateProduct).Methods("POST")
+	mux.HandleFunc("/products/{product_id}", handleDeleteProduct).Methods("DELETE")
+	mux.HandleFunc("/products", handleUpdateProduct).Methods("PUT")
+
+	if err := http.ListenAndServe("localhost:8080", mux); err != nil {
+		fmt.Println("error -", err)
 		return
 	}
 }
