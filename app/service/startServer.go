@@ -7,10 +7,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func Start_server() {
+func StartServer() {
 
 	mux := mux.NewRouter()
 
+	mux.HandleFunc("/products/{id}", handleGetById).Methods("GET")
 	mux.HandleFunc("/products", handleGetProducts).Methods("GET")
 	mux.HandleFunc("/products", handlerCreateProduct).Methods("POST")
 	mux.HandleFunc("/products/{product_id}", handleDeleteProduct).Methods("DELETE")
