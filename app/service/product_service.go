@@ -23,28 +23,29 @@ func ValidProduct(product models.Product) (models.Product, error) {
 
 }
 
-func CreateProduct(id string, title string, price float64) models.Product {
-	return models.Product{Id: id, Title: title, Price: price}
+func CreateProduct(id string, title string, price float64) (models.Product, error) {
+	product := models.Product{Id: id, Title: title, Price: price}
+
+	validProduct, err :=  ValidProduct(product)
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	return validProduct, nil
 }
 
 func GetProducts() map[string]models.Product {
-	return repositories.Products
+	return repositories.GetProducts()
 }
 
-func AddValidProductToRepositories(product models.Product) error {
-	validProduct, err := ValidProduct(product)
-	if err != nil {
-		return err
-	}
+func AddValidProductToRepositories(validProduct models.Product) {
+	repositories.UpdateProducts(validProduct)
 
-	repositories.Products[validProduct.Id] = validProduct
-
-	return nil
 }
 func DeleteProduct(id string) (models.Product, error) {
-	product, ok := repositories.Products[id]
-	if !ok {
-		return models.Product{}, errors.New("product not found")
+	product, err := repositories.GetProductById(id)
+	if err != nil {
+		return models.Product{}, err
 	}
 
 	delete(repositories.Products, id)
@@ -53,9 +54,9 @@ func DeleteProduct(id string) (models.Product, error) {
 }
 
 func GetProductById(id string) (models.Product, error) {
-	product, ok := repositories.Products[id]
-	if !ok {
-		return models.Product{}, errors.New("product not found")
+	product, err := repositories.GetProductById(id)
+	if err != nil {
+		return models.Product{}, err
 	}
 
 	return product, nil
@@ -63,28 +64,29 @@ func GetProductById(id string) (models.Product, error) {
 
 func UpdateProduct(productToUpdate models.Product) error {
 
-	product, ok := repositories.Products[productToUpdate.Id]
-	if !ok {
-		return errors.New("product not found")
+	product, err := repositories.GetProductById(productToUpdate.Id)
+
+	if err != nil {
+		return err
 	}
 	if productToUpdate.Title != "" {
 		if productToUpdate.Price != 0 && productToUpdate.Price > 0 {
-			newProduct := CreateProduct(productToUpdate.Id, productToUpdate.Title, productToUpdate.Price)
+			newProduct := models.Product{Id: productToUpdate.Id, Title: productToUpdate.Title, Price: productToUpdate.Price}
 
-			repositories.Products[productToUpdate.Id] = newProduct
+			repositories.UpdateProducts(newProduct)
 
 			return nil
 		}
 
-		newProduct := CreateProduct(productToUpdate.Id, productToUpdate.Title, product.Price)
+		newProduct := models.Product{Id: productToUpdate.Id, Title: productToUpdate.Title, Price: product.Price}
 
-		repositories.Products[productToUpdate.Id] = newProduct
+		repositories.UpdateProducts(newProduct)
 
 		return nil
 	} else if productToUpdate.Price != 0 && productToUpdate.Price > 0 {
-		newProduct := CreateProduct(productToUpdate.Id, product.Title, productToUpdate.Price)
+		newProduct := models.Product{Id: productToUpdate.Id, Title: product.Title, Price: productToUpdate.Price}
 
-		repositories.Products[productToUpdate.Id] = newProduct
+		repositories.UpdateProducts(newProduct)
 
 		return nil
 	}
