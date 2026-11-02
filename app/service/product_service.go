@@ -26,7 +26,7 @@ func ValidProduct(product models.Product) (models.Product, error) {
 func CreateProduct(id string, title string, price float64) (models.Product, error) {
 	product := models.Product{Id: id, Title: title, Price: price}
 
-	validProduct, err :=  ValidProduct(product)
+	validProduct, err := ValidProduct(product)
 	if err != nil {
 		return models.Product{}, err
 	}

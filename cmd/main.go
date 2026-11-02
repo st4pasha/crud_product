@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 )
+
 func main() {
 	mux := handlers.RegisterHandlers()
 

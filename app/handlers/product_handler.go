@@ -1,20 +1,20 @@
 package handlers
 
 import (
-	"crud_product/app/models"
-	"crud_product/app/service"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	"crud_product/app/models"
+	"crud_product/app/service"
 )
 
 func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 	products := service.GetProducts()
 
 	if err := writeJSON(w, 200, products); err != nil {
-		fmt.Printf("error, %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -24,14 +24,15 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product models.Product
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-		fmt.Printf("error, %v\n", err)
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	validProduct, err := service.CreateProduct(product.Id, product.Title, product.Price)
 	if err != nil {
-		fmt.Printf("error, %v", err)
+		http.Error(w, "Bad Request Error", http.StatusBadRequest)
+		return
 	}
 
 	service.AddValidProductToRepositories(validProduct)
@@ -39,7 +40,6 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	if err := writeJSON(w, 200, "Создан продукт с id "+product.Id+" и названием "+product.Title); err != nil {
-		fmt.Printf("error, %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -50,14 +50,12 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 	product_id, ok := path["product_id"]
 	if !ok {
-		fmt.Println("invalid id")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	_, err := service.DeleteProduct(product_id)
 	if err != nil {
-		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -70,19 +68,16 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var productUpdate models.Product = models.Product{}
 
 	if err := json.NewDecoder(r.Body).Decode(&productUpdate); err != nil {
-		fmt.Printf("error, %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := service.UpdateProduct(productUpdate); err != nil {
-		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := writeJSON(w, 200, "Продукт успешно обновлен"); err != nil {
-		fmt.Printf("error, %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -94,14 +89,12 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := path["product_id"]
 	if !ok {
-		fmt.Println("invalid id")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	product, err := service.GetProductById(id)
 	if err != nil {
-		fmt.Printf("error, %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -114,9 +107,8 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterHandlers() *mux.Router {
-
 	mux := mux.NewRouter()
-
+	
 	mux.HandleFunc("/products/{product_id}", handleGetById).Methods("GET")
 	mux.HandleFunc("/products", handleGetProducts).Methods("GET")
 	mux.HandleFunc("/products", handlerCreateProduct).Methods("POST")
