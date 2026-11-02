@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/mux"
 
 	"crud_product/app/models"
@@ -39,8 +39,7 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 
-	if err := writeJSON(w, 200, "Создан продукт с id "+product.Id+" и названием "+product.Title); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if err := writeJSON(w, 200, validProduct); err != nil {
 		return
 	}
 }
@@ -59,7 +58,7 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -77,8 +76,7 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := writeJSON(w, 200, "Продукт успешно обновлен"); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if err := writeJSON(w, 200, productUpdate); err != nil {
 		return
 	}
 
@@ -100,20 +98,19 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := writeJSON(w, 200, product); err != nil {
-		fmt.Printf("invalid id, %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
-func RegisterHandlers() *mux.Router {
-	mux := mux.NewRouter()
-	
-	mux.HandleFunc("/products/{product_id}", handleGetById).Methods("GET")
-	mux.HandleFunc("/products", handleGetProducts).Methods("GET")
-	mux.HandleFunc("/products", handlerCreateProduct).Methods("POST")
-	mux.HandleFunc("/products/{product_id}", handleDeleteProduct).Methods("DELETE")
-	mux.HandleFunc("/products", handleUpdateProduct).Methods("PUT")
+func RegisterHandlers() *chi.Mux {
+	mux := chi.NewRouter()
+
+	mux.Get("/products/{product_id}", handleGetById)
+	mux.Get("/products", handleGetProducts)
+	mux.Post("/products", handlerCreateProduct)
+	mux.Delete("/products/{product_id}", handleDeleteProduct)
+	mux.Put("/products", handleUpdateProduct)
 
 	return mux
 }
