@@ -34,12 +34,17 @@ func CreateProduct(id string, title string, price float64) (models.Product, erro
 	return validProduct, nil
 }
 
-func GetProducts() map[string]models.Product {
+func GetProducts() (map[string]models.Product, error) {
 	return repositories.GetProducts()
 }
 
-func AddValidProductToRepositories(validProduct models.Product) {
-	repositories.UpdateProducts(validProduct)
+func AddValidProductToRepositories(validProduct models.Product) error {
+	err := repositories.AddToRepositories(validProduct)
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 func DeleteProduct(id string) error {
