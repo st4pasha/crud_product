@@ -42,15 +42,13 @@ func AddValidProductToRepositories(validProduct models.Product) {
 	repositories.UpdateProducts(validProduct)
 
 }
-func DeleteProduct(id string) (models.Product, error) {
-	product, err := repositories.GetProductById(id)
-	if err != nil {
-		return models.Product{}, err
+func DeleteProduct(id string) error {
+
+	if err := repositories.DeleteProductById(id); err != nil {
+		return err
 	}
 
-	delete(repositories.Products, id)
-
-	return product, nil
+	return nil
 }
 
 func GetProductById(id string) (models.Product, error) {
@@ -69,11 +67,14 @@ func UpdateProduct(productToUpdate models.Product) error {
 	if err != nil {
 		return err
 	}
+
 	if productToUpdate.Title != "" {
 		if productToUpdate.Price != 0 && productToUpdate.Price > 0 {
 			newProduct := models.Product{Id: productToUpdate.Id, Title: productToUpdate.Title, Price: productToUpdate.Price}
 
-			repositories.UpdateProducts(newProduct)
+			if err := repositories.UpdateProducts(newProduct); err != nil {
+				return err
+			}
 
 			return nil
 		}

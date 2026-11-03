@@ -53,7 +53,8 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := service.DeleteProduct(product_id)
+	err := service.DeleteProduct(product_id)
+	
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
