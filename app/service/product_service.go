@@ -34,7 +34,7 @@ func CreateProduct(id string, title string, price float64) (models.Product, erro
 	return validProduct, nil
 }
 
-func GetProducts() (map[string]models.Product, error) {
+func GetProducts() ([]models.Product, error) {
 	return repositories.GetProducts()
 }
 

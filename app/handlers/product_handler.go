@@ -27,7 +27,6 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product models.Product
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
