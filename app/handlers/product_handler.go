@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"crud_product/app/models"
+	"crud_product/app/models/modelsDTO.go"
 	"crud_product/app/service"
 )
 
@@ -24,7 +25,7 @@ func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product models.ProductToCreate
+	var product modelsDTO.ProductToCreate
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -37,16 +38,9 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addedProduct, err := service.AddValidProductToRepositories(validProduct)
-
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
 	w.WriteHeader(http.StatusCreated)
 
-	if err := writeJSON(w, 200, addedProduct); err != nil {
+	if err := writeJSON(w, 200, validProduct); err != nil {
 		return
 	}
 }
@@ -71,19 +65,21 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 
-	var productUpdate models.Product = models.Product{}
+	var productToUpdate models.Product = models.Product{}
 
-	if err := json.NewDecoder(r.Body).Decode(&productUpdate); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&productToUpdate); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := service.UpdateProduct(productUpdate); err != nil {
+	productUpdated, err := service.UpdateProduct(productToUpdate);
+
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := writeJSON(w, 200, productUpdate); err != nil {
+	if err := writeJSON(w, 200, productUpdated); err != nil {
 		return
 	}
 

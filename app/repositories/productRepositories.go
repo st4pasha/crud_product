@@ -59,33 +59,35 @@ func GetProductById(id string) (models.Product, error) {
 
 }
 
-func UpdateProducts(productUpdated models.Product) error {
+func UpdateProducts(productUpdated models.Product) (models.Product, error) {
 	_, err := GetProductById(productUpdated.Id)
 
 	if err != nil {
-		return err
+		return models.Product{}, err
 	}
 
 	if err := DeleteProductById(productUpdated.Id); err != nil {
-		return err
+		return models.Product{}, err
 	}
 
-	if err := AddToRepositories(productUpdated); err != nil {
-		return err
+	addedProduct, err := AddToRepositories(productUpdated.Title, productUpdated.Price);
+	
+	if err != nil {
+		return models.Product{}, err
 	}
 
 	products, err := GetProducts()
 	if err != nil {
-		return err
+		return models.Product{}, err
 	}
 
 	sliceStr := sliceToString(products)
 
 	if err := util.WriteToFile(filePathProducts, sliceStr); err != nil {
-		return err
+		return models.Product{}, err
 	}
 
-	return nil
+	return addedProduct, nil
 }
 
 func DeleteProductById(id string) error {
@@ -114,23 +116,36 @@ func DeleteProductById(id string) error {
 	return errors.New("product not found")
 }
 
-func AddToRepositories(productToRepostiroies models.Product) error {
-	_, err := GetProductById(productToRepostiroies.Id)
+func AddToRepositories(title string, price float64) (models.Product, error) {
+
+	id, err := getNextId()
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	productToRepositories := models.Product{Id: id, Title: title, Price: price}
+
+	if err := productToRepositories.ValidProduct(); err != nil {
+		return models.Product{}, err
+	}
+
+	_, err = GetProductById(productToRepositories.Id)
 
 	if err == nil {
-		return errors.New("product was created")
+		return models.Product{}, errors.New("product was created")
 	}
 
-	str := productToStr(productToRepostiroies)
+	str := productToStr(productToRepositories)
 
 	if err := util.AppendToFile(filePathProducts, str); err != nil {
-		return err
+		return models.Product{}, err
 	}
 
-	return nil
+	return productToRepositories, nil
 }
 
-func GetNextId() (string, error) {
+func getNextId() (string, error) {
 	data, err := os.ReadFile(filePathLastId)
 	if err != nil {
 		return "", err

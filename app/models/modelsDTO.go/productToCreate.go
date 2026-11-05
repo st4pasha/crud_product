@@ -1,4 +1,4 @@
-package models
+package modelsDTO
 
 type ProductToCreate struct {
 	Title string `json:"title"`
