@@ -9,7 +9,10 @@ import (
 	"strings"
 )
 
-var filePathProducts string = "app/data/products.csv"
+var (
+	filePathProducts string = "app/data/products.csv"
+	filePathLastId string = "app/data/lastId.csv"
+)
 
 func GetProducts() ([]models.Product, error) {
 
@@ -125,6 +128,38 @@ func AddToRepositories(productToRepostiroies models.Product) error {
 	}
 
 	return nil
+}
+
+func GetNextId() (string, error) {
+	data, err := os.ReadFile(filePathLastId)
+	if err != nil {
+		return "", err
+	}
+
+	if string(data) == "" {
+		if err  := util.WriteToFile(filePathLastId, "1"); err != nil {
+			return "", err
+		}
+
+		return "1", nil
+	}
+
+	idStr := strings.TrimSpace(string(data))
+
+	lastIdInt, err := strconv.Atoi(idStr)
+	if err != nil {
+		return "", err
+	}
+
+	nextIdInt := lastIdInt + 1
+
+	nextIdStr := strconv.Itoa(nextIdInt)
+
+	if err := util.WriteToFile(filePathLastId, nextIdStr); err != nil {
+		return "", err
+	}
+
+	return nextIdStr, nil
 }
 
 func productToStr(product models.Product) string {

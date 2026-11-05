@@ -23,7 +23,13 @@ func ValidProduct(product models.Product) (models.Product, error) {
 
 }
 
-func CreateProduct(id string, title string, price float64) (models.Product, error) {
+func CreateProduct(title string, price float64) (models.Product, error) {
+	id, err := repositories.GetNextId()
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
 	product := models.Product{Id: id, Title: title, Price: price}
 
 	validProduct, err := ValidProduct(product)
@@ -38,13 +44,13 @@ func GetProducts() ([]models.Product, error) {
 	return repositories.GetProducts()
 }
 
-func AddValidProductToRepositories(validProduct models.Product) error {
+func AddValidProductToRepositories(validProduct models.Product) (models.Product, error) {
 	err := repositories.AddToRepositories(validProduct)
 	if err != nil {
-		return err
+		return models.Product{}, err
 	}
 
-	return nil
+	return validProduct, nil
 
 }
 func DeleteProduct(id string) error {

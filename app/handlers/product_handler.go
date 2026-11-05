@@ -24,27 +24,29 @@ func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product models.Product
+	var product models.ProductToCreate
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	validProduct, err := service.CreateProduct(product.Id, product.Title, product.Price)
+	validProduct, err := service.CreateProduct(product.Title, product.Price)
 	if err != nil {
 		http.Error(w, "Bad Request Error", http.StatusBadRequest)
 		return
 	}
 
-	if err := service.AddValidProductToRepositories(validProduct); err != nil {
+	addedProduct, err := service.AddValidProductToRepositories(validProduct)
+
+	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 
-	if err := writeJSON(w, 200, validProduct); err != nil {
+	if err := writeJSON(w, 200, addedProduct); err != nil {
 		return
 	}
 }
