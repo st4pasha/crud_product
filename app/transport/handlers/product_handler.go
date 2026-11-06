@@ -7,8 +7,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"crud_product/app/models"
-	"crud_product/app/models/modelsDTO.go"
 	"crud_product/app/service"
+	"crud_product/app/transport/dto"
 )
 
 func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
@@ -25,7 +25,7 @@ func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product modelsDTO.ProductToCreate
+	var product dto.ProductToCreate
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -72,7 +72,7 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productUpdated, err := service.UpdateProduct(productToUpdate);
+	productUpdated, err := service.UpdateProduct(productToUpdate)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

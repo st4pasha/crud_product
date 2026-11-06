@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crud_product/app/handlers"
+	"crud_product/app/transport/handlers"
 	"fmt"
 	"net/http"
 )
