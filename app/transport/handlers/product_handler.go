@@ -5,14 +5,18 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/mux"
 
 	"crud_product/app/models"
 	"crud_product/app/service"
+	"crud_product/app/transport/dto"
 )
 
 func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
-	products := service.GetProducts()
+	products, err := service.GetProducts()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	if err := writeJSON(w, 200, products); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -21,21 +25,18 @@ func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 }
 
 func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product models.Product
+	var product dto.ProductToCreate
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	validProduct, err := service.CreateProduct(product.Id, product.Title, product.Price)
+	validProduct, err := service.CreateProduct(product.Title, product.Price)
 	if err != nil {
 		http.Error(w, "Bad Request Error", http.StatusBadRequest)
 		return
 	}
-
-	service.AddValidProductToRepositories(validProduct)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -45,54 +46,54 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)
+	product_id := chi.URLParam(r, "product_id")
 
-	product_id, ok := path["product_id"]
-	if !ok {
+	if product_id == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	err := service.DeleteProduct(product_id)
-	
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 
-	var productUpdate models.Product = models.Product{}
+	var productToUpdate models.Product = models.Product{}
 
-	if err := json.NewDecoder(r.Body).Decode(&productUpdate); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&productToUpdate); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := service.UpdateProduct(productUpdate); err != nil {
+	productUpdated, err := service.UpdateProduct(productToUpdate)
+
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := writeJSON(w, 200, productUpdate); err != nil {
+	if err := writeJSON(w, 200, productUpdated); err != nil {
 		return
 	}
 
 }
 
 func handleGetById(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)
+	product_id := chi.URLParam(r, "product_id")
 
-	id, ok := path["product_id"]
-	if !ok {
+	if product_id == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	product, err := service.GetProductById(id)
+	product, err := service.GetProductById(product_id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -105,15 +106,15 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterHandlers() *chi.Mux {
-	mux := chi.NewRouter()
+	router := chi.NewRouter()
 
-	mux.Get("/products/{product_id}", handleGetById)
-	mux.Get("/products", handleGetProducts)
-	mux.Post("/products", handlerCreateProduct)
-	mux.Delete("/products/{product_id}", handleDeleteProduct)
-	mux.Put("/products", handleUpdateProduct)
+	router.Get("/products/{product_id}", handleGetById)
+	router.Get("/products", handleGetProducts)
+	router.Post("/products", handlerCreateProduct)
+	router.Delete("/products/{product_id}", handleDeleteProduct)
+	router.Put("/products", handleUpdateProduct)
 
-	return mux
+	return router
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) error {

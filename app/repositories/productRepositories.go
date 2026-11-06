@@ -1,42 +1,211 @@
 package repositories
 
 import (
+	util "crud_product/app"
 	"crud_product/app/models"
 	"errors"
+	"os"
+	"strconv"
+	"strings"
 )
 
-var products map[string]models.Product = map[string]models.Product{}
+var (
+	filePathProducts string = "app/data/products.csv"
+	filePathLastId string = "app/data/lastId.csv"
+)
 
-func GetProducts() map[string]models.Product {
-	return products
+func GetProducts() ([]models.Product, error) {
+
+	var products []models.Product
+
+	data, err := os.ReadFile(filePathProducts)
+	if err != nil {
+		return []models.Product{}, err
+	}
+
+	if string(data) == "" {
+		return []models.Product{}, nil
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+
+	for _, line := range lines {
+		product, err := strToProduct(strings.TrimSpace(line))
+		if err != nil {
+			return []models.Product{}, err
+		}
+
+		products = append(products, product)
+
+	}
+
+	return products, nil
 }
 
 func GetProductById(id string) (models.Product, error) {
-	product, ok := products[id]
-	if !ok {
-		return models.Product{}, errors.New("product not found")
+	products, err := GetProducts()
+
+	if err != nil {
+		return models.Product{}, err
 	}
 
-	return product, nil
+	for _, product := range products {
+		if product.Id == id {
+			return product, nil
+		}
+	}
+
+	return models.Product{}, errors.New("product not found")
+
 }
 
-func UpdateProducts(productUpdated models.Product) error {
+func UpdateProducts(productUpdated models.Product) (models.Product, error) {
 	_, err := GetProductById(productUpdated.Id)
-	if err != nil {
-		return err
-	}
-	products[productUpdated.Id] = productUpdated
 
-	return nil
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	if err := DeleteProductById(productUpdated.Id); err != nil {
+		return models.Product{}, err
+	}
+
+	addedProduct, err := AddToRepositories(productUpdated.Title, productUpdated.Price);
+	
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	products, err := GetProducts()
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	sliceStr := sliceToString(products)
+
+	if err := util.WriteToFile(filePathProducts, sliceStr); err != nil {
+		return models.Product{}, err
+	}
+
+	return addedProduct, nil
 }
 
 func DeleteProductById(id string) error {
-	_, ok := GetProducts()[id]
-	if !ok {
-		return errors.New("product not found")
+	products, err := GetProducts()
+	if err != nil {
+		return err
 	}
 
-	delete(GetProducts(), id)
+	for i, product := range products {
+		if product.Id == id {
+			products[i] = products[(len(products) - 1)]
 
-	return nil
+			products = products[:len(products)-1]
+
+			sliceStr := sliceToString(products)
+
+			if err := util.WriteToFile(filePathProducts, sliceStr); err != nil {
+				return err
+			}
+
+			return nil
+
+		}
+	}
+
+	return errors.New("product not found")
+}
+
+func AddToRepositories(title string, price float64) (models.Product, error) {
+
+	id, err := getNextId()
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	productToRepositories := models.Product{Id: id, Title: title, Price: price}
+
+	if err := productToRepositories.ValidProduct(); err != nil {
+		return models.Product{}, err
+	}
+
+	_, err = GetProductById(productToRepositories.Id)
+
+	if err == nil {
+		return models.Product{}, errors.New("product was created")
+	}
+
+	str := productToStr(productToRepositories)
+
+	if err := util.AppendToFile(filePathProducts, str); err != nil {
+		return models.Product{}, err
+	}
+
+	return productToRepositories, nil
+}
+
+func getNextId() (string, error) {
+	data, err := os.ReadFile(filePathLastId)
+	if err != nil {
+		return "", err
+	}
+
+	if string(data) == "" {
+		if err  := util.WriteToFile(filePathLastId, "1"); err != nil {
+			return "", err
+		}
+
+		return "1", nil
+	}
+
+	idStr := strings.TrimSpace(string(data))
+
+	lastIdInt, err := strconv.Atoi(idStr)
+	if err != nil {
+		return "", err
+	}
+
+	nextIdInt := lastIdInt + 1
+
+	nextIdStr := strconv.Itoa(nextIdInt)
+
+	if err := util.WriteToFile(filePathLastId, nextIdStr); err != nil {
+		return "", err
+	}
+
+	return nextIdStr, nil
+}
+
+func productToStr(product models.Product) string {
+	var str string
+
+	str += product.Id + "|" + product.Title + "|" + strconv.FormatFloat(product.Price, 'g', -1, 64) + "\n"
+
+	return str
+}
+
+func sliceToString(sliceProduct []models.Product) string {
+	var str string = ""
+
+	for _, product := range sliceProduct {
+		str += product.Id + "|" + product.Title + "|" + strconv.FormatFloat(product.Price, 'g', -1, 64) + "\n"
+	}
+
+	return str
+}
+
+func strToProduct(str string) (models.Product, error) {
+	products := strings.Split(str, "|")
+
+	id := products[0]
+	title := products[1]
+	price, err := strconv.ParseFloat(products[2], 64)
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	product := models.Product{Id: id, Title: title, Price: price}
+
+	return product, nil
 }

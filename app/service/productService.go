@@ -6,42 +6,22 @@ import (
 	"errors"
 )
 
-func ValidProduct(product models.Product) (models.Product, error) {
-	if product.Title == "" {
-		return models.Product{}, errors.New("invalid name")
-	}
+func CreateProduct(title string, price float64) (models.Product, error) {
 
-	if product.Price <= 0 {
-		return models.Product{}, errors.New("invalid price")
-	}
+	product, err := repositories.AddToRepositories(title, price)
 
-	if product.Id == "" {
-		return models.Product{}, errors.New("invalid id")
-	}
-
-	return models.Product{Id: product.Id, Title: product.Title, Price: product.Price}, nil
-
-}
-
-func CreateProduct(id string, title string, price float64) (models.Product, error) {
-	product := models.Product{Id: id, Title: title, Price: price}
-
-	validProduct, err := ValidProduct(product)
 	if err != nil {
 		return models.Product{}, err
 	}
 
-	return validProduct, nil
+	return product, nil
+
 }
 
-func GetProducts() map[string]models.Product {
+func GetProducts() ([]models.Product, error) {
 	return repositories.GetProducts()
 }
 
-func AddValidProductToRepositories(validProduct models.Product) {
-	repositories.UpdateProducts(validProduct)
-
-}
 func DeleteProduct(id string) error {
 
 	if err := repositories.DeleteProductById(id); err != nil {
@@ -60,37 +40,45 @@ func GetProductById(id string) (models.Product, error) {
 	return product, nil
 }
 
-func UpdateProduct(productToUpdate models.Product) error {
+func UpdateProduct(productToUpdate models.Product) (models.Product, error) {
 
 	product, err := repositories.GetProductById(productToUpdate.Id)
 
 	if err != nil {
-		return err
+		return models.Product{}, err
 	}
 
 	if productToUpdate.Title != "" {
 		if productToUpdate.Price != 0 && productToUpdate.Price > 0 {
 			newProduct := models.Product{Id: productToUpdate.Id, Title: productToUpdate.Title, Price: productToUpdate.Price}
 
-			if err := repositories.UpdateProducts(newProduct); err != nil {
-				return err
+			productUpdated, err := repositories.UpdateProducts(newProduct); 
+			if err != nil {
+				return models.Product{}, err
 			}
 
-			return nil
+			return productUpdated, nil
 		}
 
 		newProduct := models.Product{Id: productToUpdate.Id, Title: productToUpdate.Title, Price: product.Price}
 
-		repositories.UpdateProducts(newProduct)
+		productUpdated, err := repositories.UpdateProducts(newProduct); 
+			if err != nil {
+				return models.Product{}, err
+			}
 
-		return nil
+			return productUpdated, nil
+
 	} else if productToUpdate.Price != 0 && productToUpdate.Price > 0 {
 		newProduct := models.Product{Id: productToUpdate.Id, Title: product.Title, Price: productToUpdate.Price}
 
-		repositories.UpdateProducts(newProduct)
+		productUpdated, err := repositories.UpdateProducts(newProduct); 
+			if err != nil {
+				return models.Product{}, err
+			}
 
-		return nil
+			return productUpdated, nil
 	}
 
-	return errors.New("only ID received")
+	return models.Product{}, errors.New("only ID received")
 }
