@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
-	"crud_product/app/models"
 	"crud_product/app/service"
 	"crud_product/app/transport/dto"
 )
@@ -65,14 +65,20 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 
-	var productToUpdate models.Product = models.Product{}
+	var productDTO dto.ProductToCreate = dto.ProductToCreate{}
 
-	if err := json.NewDecoder(r.Body).Decode(&productToUpdate); err != nil {
+	product_id := chi.URLParam(r, "product_id")
+	if product_id == "" {
+		http.Error(w, "Bad Request Error", http.StatusBadRequest)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&productDTO); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	productUpdated, err := service.UpdateProduct(productToUpdate)
+	productUpdated, err := service.UpdateProduct(productDTO, product_id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -94,6 +100,12 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	product, err := service.GetProductById(product_id)
+
+	if err == sql.ErrNoRows {
+		http.Error(w, "{'error': product not found}", http.StatusBadRequest)
+		return
+	}
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -112,7 +124,7 @@ func RegisterHandlers() *chi.Mux {
 	router.Get("/products", handleGetProducts)
 	router.Post("/products", handlerCreateProduct)
 	router.Delete("/products/{product_id}", handleDeleteProduct)
-	router.Put("/products", handleUpdateProduct)
+	router.Patch("/products/{product_id}", handleUpdateProduct)
 
 	return router
 }
