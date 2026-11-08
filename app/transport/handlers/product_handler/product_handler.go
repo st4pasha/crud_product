@@ -1,8 +1,9 @@
-package product_test
+package product
 
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,7 +12,7 @@ import (
 	"crud_product/app/transport/dto"
 )
 
-func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
+func handleGet(w http.ResponseWriter, _ *http.Request) {
 	products, err := productservice.Get()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -24,7 +25,7 @@ func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
+func handlerCreate(w http.ResponseWriter, r *http.Request) {
 	var product dto.ProductToCreate
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
@@ -45,7 +46,7 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
+func handleDelete(w http.ResponseWriter, r *http.Request) {
 	product_id := chi.URLParam(r, "product_id")
 
 	if product_id == "" {
@@ -63,7 +64,7 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
+func handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	var productDTO dto.ProductToCreate = dto.ProductToCreate{}
 
@@ -101,12 +102,13 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 
 	productservice, err := productservice.GetById(product_id)
 
-	if err == sql.ErrNoRows {
-		http.Error(w, "{'error': productservice not found}", http.StatusBadRequest)
-		return
-	}
-
 	if err != nil {
+		
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "{'error': productservice not found}", http.StatusBadRequest)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -121,10 +123,10 @@ func RegisterHandlers() *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Get("/products/{product_id}", handleGetById)
-	router.Get("/products", handleGetProducts)
-	router.Post("/products", handlerCreateProduct)
-	router.Delete("/products/{product_id}", handleDeleteProduct)
-	router.Patch("/products/{product_id}", handleUpdateProduct)
+	router.Get("/products", handleGet)
+	router.Post("/products", handlerCreate)
+	router.Delete("/products/{product_id}", handleDelete)
+	router.Patch("/products/{product_id}", handleUpdate)
 
 	return router
 }

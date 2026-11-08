@@ -36,11 +36,10 @@ func Delete(id string) error {
 func GetById(id string) (models.Product, error) {
 	product, err := productrepo.GetById(id)
 
-	if err == sql.ErrNoRows {
-		return models.Product{}, nil
-	}
-
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Product{}, nil
+		}
 		return models.Product{}, err
 	}
 
