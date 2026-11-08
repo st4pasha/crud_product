@@ -1,4 +1,4 @@
-package handlers
+package product_test
 
 import (
 	"database/sql"
@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"crud_product/app/service"
+	productservice "crud_product/app/service/product_service"
 	"crud_product/app/transport/dto"
 )
 
 func handleGetProducts(w http.ResponseWriter, _ *http.Request) {
-	products, err := service.GetProducts()
+	products, err := productservice.Get()
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -32,7 +32,7 @@ func handlerCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validProduct, err := service.CreateProduct(product.Title, product.Price)
+	validProduct, err := productservice.Create(product.Title, product.Price)
 	if err != nil {
 		http.Error(w, "Bad Request Error", http.StatusBadRequest)
 		return
@@ -53,7 +53,7 @@ func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := service.DeleteProduct(product_id)
+	err := productservice.Delete(product_id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -78,7 +78,7 @@ func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productUpdated, err := service.UpdateProduct(productDTO, product_id)
+	productUpdated, err := productservice.Update(productDTO, product_id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -99,10 +99,10 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := service.GetProductById(product_id)
+	productservice, err := productservice.GetById(product_id)
 
 	if err == sql.ErrNoRows {
-		http.Error(w, "{'error': product not found}", http.StatusBadRequest)
+		http.Error(w, "{'error': productservice not found}", http.StatusBadRequest)
 		return
 	}
 
@@ -111,7 +111,7 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := writeJSON(w, 200, product); err != nil {
+	if err := writeJSON(w, 200, productservice); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}

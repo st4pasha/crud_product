@@ -1,4 +1,4 @@
-package repositories
+package product
 
 import (
 	util "crud_product/app"
@@ -13,12 +13,11 @@ import (
 )
 
 var (
-	filePathProducts string = "app/data/products.csv"
 	filePathLastId   string = "app/data/lastId.csv"
 	pathDB           string = "app/data/products.db"
 )
 
-func GetProducts() ([]models.Product, error) {
+func Get() ([]models.Product, error) {
 
 	var products []models.Product
 
@@ -60,7 +59,7 @@ func GetProducts() ([]models.Product, error) {
 	return products, nil
 }
 
-func GetProductById(product_id string) (models.Product, error) {
+func GetById(product_id string) (models.Product, error) {
 	q := `SELECT id, title, price FROM products WHERE id = ?`
 
 	db, err := getConn()
@@ -87,7 +86,7 @@ func GetProductById(product_id string) (models.Product, error) {
 
 }
 
-func UpdateProducts(productToUpdate models.Product) (models.Product, error) {
+func Update(productToUpdate models.Product) (models.Product, error) {
 	q := `UPDATE products SET title = ?, price = ? WHERE id = ?`
 
 	db, err := getConn()
@@ -95,7 +94,7 @@ func UpdateProducts(productToUpdate models.Product) (models.Product, error) {
 		return models.Product{}, nil
 	}
 
-	_, err = GetProductById(productToUpdate.Id)
+	_, err = GetById(productToUpdate.Id)
 
 	if err != nil {
 		return models.Product{}, err
@@ -108,7 +107,7 @@ func UpdateProducts(productToUpdate models.Product) (models.Product, error) {
 	return productToUpdate, nil
 }
 
-func DeleteProductById(id string) error {
+func DeleteById(id string) error {
 
 	q := `DELETE FROM products WHERE id = ?`
 
@@ -118,7 +117,7 @@ func DeleteProductById(id string) error {
 	}
 
 	// Проверяем есть ли такой продукт, чтобы его удалить
-	_, err = GetProductById(id)
+	_, err = GetById(id)
 	if err != nil {
 		return err
 	}
@@ -143,11 +142,11 @@ func AddToRepositories(title string, price float64) (models.Product, error) {
 
 	productToRepositories := models.Product{Id: id, Title: title, Price: price}
 
-	if err := productToRepositories.ValidProduct(); err != nil {
+	if err := productToRepositories.Valid(); err != nil {
 		return models.Product{}, err
 	}
 
-	_, err = GetProductById(productToRepositories.Id)
+	_, err = GetById(productToRepositories.Id)
 
 	if err == nil {
 		return models.Product{}, errors.New("product was created")
@@ -215,37 +214,4 @@ func getNextId() (string, error) {
 	}
 
 	return nextIdStr, nil
-}
-
-func productToStr(product models.Product) string {
-	var str string
-
-	str += product.Id + "|" + product.Title + "|" + strconv.FormatFloat(product.Price, 'g', -1, 64) + "\n"
-
-	return str
-}
-
-func sliceToString(sliceProduct []models.Product) string {
-	var str string = ""
-
-	for _, product := range sliceProduct {
-		str += product.Id + "|" + product.Title + "|" + strconv.FormatFloat(product.Price, 'g', -1, 64) + "\n"
-	}
-
-	return str
-}
-
-func strToProduct(str string) (models.Product, error) {
-	products := strings.Split(str, "|")
-
-	id := products[0]
-	title := products[1]
-	price, err := strconv.ParseFloat(products[2], 64)
-	if err != nil {
-		return models.Product{}, err
-	}
-
-	product := models.Product{Id: id, Title: title, Price: price}
-
-	return product, nil
 }

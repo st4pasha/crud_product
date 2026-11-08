@@ -8,7 +8,7 @@ type Product struct {
 	Price float64 `json:"price"`
 }
 
-func (p Product) ValidProduct() error {
+func (p Product) Valid() error {
 	if p.Title == "" {
 		return errors.New("invalid name")
 	}

@@ -1,16 +1,16 @@
-package service
+package product
 
 import (
 	"crud_product/app/models"
-	"crud_product/app/repositories"
+	productrepo "crud_product/app/repositories/product_repositories"
 	"crud_product/app/transport/dto"
 	"database/sql"
 	"errors"
 )
 
-func CreateProduct(title string, price float64) (models.Product, error) {
+func Create(title string, price float64) (models.Product, error) {
 
-	product, err := repositories.AddToRepositories(title, price)
+	product, err := productrepo.AddToRepositories(title, price)
 
 	if err != nil {
 		return models.Product{}, err
@@ -20,21 +20,21 @@ func CreateProduct(title string, price float64) (models.Product, error) {
 
 }
 
-func GetProducts() ([]models.Product, error) {
-	return repositories.GetProducts()
+func Get() ([]models.Product, error) {
+	return productrepo.Get()
 }
 
-func DeleteProduct(id string) error {
+func Delete(id string) error {
 
-	if err := repositories.DeleteProductById(id); err != nil {
+	if err := productrepo.DeleteById(id); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetProductById(id string) (models.Product, error) {
-	product, err := repositories.GetProductById(id)
+func GetById(id string) (models.Product, error) {
+	product, err := productrepo.GetById(id)
 
 	if err == sql.ErrNoRows {
 		return models.Product{}, nil
@@ -47,9 +47,9 @@ func GetProductById(id string) (models.Product, error) {
 	return product, nil
 }
 
-func UpdateProduct(productDTO dto.ProductToCreate, id string) (models.Product, error) {
+func Update(productDTO dto.ProductToCreate, id string) (models.Product, error) {
 
-	product, err := repositories.GetProductById(id)
+	product, err := productrepo.GetById(id)
 
 	if err != nil {
 		return models.Product{}, err
@@ -59,7 +59,7 @@ func UpdateProduct(productDTO dto.ProductToCreate, id string) (models.Product, e
 		if productDTO.Price != 0 && productDTO.Price > 0 {
 			newProduct := models.Product{Id: id, Title: productDTO.Title, Price: productDTO.Price}
 
-			productToUpdate, err := repositories.UpdateProducts(newProduct)
+			productToUpdate, err := productrepo.Update(newProduct)
 			if err != nil {
 				return models.Product{}, err
 			}
@@ -69,7 +69,7 @@ func UpdateProduct(productDTO dto.ProductToCreate, id string) (models.Product, e
 
 		newProduct := models.Product{Id: id, Title: productDTO.Title, Price: product.Price}
 
-		productUpdated, err := repositories.UpdateProducts(newProduct)
+		productUpdated, err := productrepo.Update(newProduct)
 		if err != nil {
 			return models.Product{}, err
 		}
@@ -79,7 +79,7 @@ func UpdateProduct(productDTO dto.ProductToCreate, id string) (models.Product, e
 	} else if productDTO.Price != 0 && productDTO.Price > 0 {
 		newProduct := models.Product{Id: id, Title: product.Title, Price: productDTO.Price}
 
-		productUpdated, err := repositories.UpdateProducts(newProduct)
+		productUpdated, err := productrepo.Update(newProduct)
 		if err != nil {
 			return models.Product{}, err
 		}
