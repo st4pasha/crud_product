@@ -24,7 +24,7 @@ func Get() ([]models.Product, error) {
 	return productrepo.Get()
 }
 
-func Delete(id string) error {
+func Delete(id int) error {
 
 	if err := productrepo.DeleteById(id); err != nil {
 		return err
@@ -33,7 +33,7 @@ func Delete(id string) error {
 	return nil
 }
 
-func GetById(id string) (models.Product, error) {
+func GetById(id int) (models.Product, error) {
 	product, err := productrepo.GetById(id)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func GetById(id string) (models.Product, error) {
 	return product, nil
 }
 
-func Update(productDTO dto.ProductToCreate, id string) (models.Product, error) {
+func Update(productDTO dto.ProductToCreate, id int) (models.Product, error) {
 
 	product, err := productrepo.GetById(id)
 

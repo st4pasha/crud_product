@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
@@ -47,14 +48,19 @@ func handlerCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDelete(w http.ResponseWriter, r *http.Request) {
-	product_id := chi.URLParam(r, "product_id")
+	productID := chi.URLParam(r, "product_id")
 
-	if product_id == "" {
+	if productID == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err := productservice.Delete(product_id)
+	productIDint, err := strconv.Atoi(productID)
+	if err != nil {
+		return 
+	}
+
+	err = productservice.Delete(productIDint)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -68,8 +74,8 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	var productDTO dto.ProductToCreate = dto.ProductToCreate{}
 
-	product_id := chi.URLParam(r, "product_id")
-	if product_id == "" {
+	productID := chi.URLParam(r, "product_id")
+	if productID == "" {
 		http.Error(w, "Bad Request Error", http.StatusBadRequest)
 		return
 	}
@@ -79,7 +85,12 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productUpdated, err := productservice.Update(productDTO, product_id)
+	productIDint, err := strconv.Atoi(productID)
+	if err != nil {
+		return 
+	}
+
+	productUpdated, err := productservice.Update(productDTO, productIDint)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -93,14 +104,19 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetById(w http.ResponseWriter, r *http.Request) {
-	product_id := chi.URLParam(r, "product_id")
+	productID := chi.URLParam(r, "product_id")
 
-	if product_id == "" {
+	if productID == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	productservice, err := productservice.GetById(product_id)
+	productIDint, err := strconv.Atoi(productID)
+	if err != nil {
+		return 
+	}
+
+	productservice, err := productservice.GetById(productIDint)
 
 	if err != nil {
 		

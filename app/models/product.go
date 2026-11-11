@@ -3,7 +3,7 @@ package models
 import "errors"
 
 type Product struct {
-	Id    string  `json:"id"`
+	Id    int `json:"id"`
 	Title string  `json:"title"`
 	Price float64 `json:"price"`
 }
@@ -15,10 +15,6 @@ func (p Product) Valid() error {
 
 	if p.Price <= 0 {
 		return errors.New("invalid price")
-	}
-
-	if p.Id == "" {
-		return errors.New("invalid id")
 	}
 
 	return nil

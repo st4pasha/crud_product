@@ -1,20 +1,15 @@
 package product
 
 import (
-	util "crud_product/app"
 	"crud_product/app/models"
 	"database/sql"
 	"errors"
-	"os"
-	"strconv"
-	"strings"
 
 	_ "modernc.org/sqlite"
 )
 
 var (
-	filePathLastId   string = "app/data/lastId.csv"
-	pathDB           string = "app/data/products.db"
+	pathDB         string = "app/data/products.db"
 )
 
 func Get() ([]models.Product, error) {
@@ -38,7 +33,7 @@ func Get() ([]models.Product, error) {
 
 	for rows.Next() {
 		var (
-			id    string
+			id    int
 			title string
 			price float64
 		)
@@ -59,13 +54,13 @@ func Get() ([]models.Product, error) {
 	return products, nil
 }
 
-func GetById(product_id string) (models.Product, error) {
+func GetById(product_id int) (models.Product, error) {
 	q := `SELECT id, title, price FROM products WHERE id = ?`
 
 	db, err := getConn()
 
 	var (
-		id    string
+		id    int
 		title string
 		price float64
 	)
@@ -107,7 +102,7 @@ func Update(productToUpdate models.Product) (models.Product, error) {
 	return productToUpdate, nil
 }
 
-func DeleteById(id string) error {
+func DeleteById(id int) error {
 
 	q := `DELETE FROM products WHERE id = ?`
 
@@ -131,9 +126,20 @@ func DeleteById(id string) error {
 
 func AddToRepositories(title string, price float64) (models.Product, error) {
 
+	var id int
 	q := `INSERT INTO products (id, title, price) VALUES(?, ?, ?)`
 
-	id, err := getNextId()
+	products, err := Get()
+
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	if len(products) == 0 {
+		id = 1
+	} else {
+		id = products[len(products)-1].Id + 1
+	}
 
 	db, err := getConn()
 	if err != nil {
@@ -166,52 +172,4 @@ func getConn() (*sql.DB, error) {
 	}
 
 	return db, nil
-}
-
-func Init() error {
-	db, err := getConn()
-
-	if err != nil {
-		return err
-	}
-
-	q := `CREATE TABLE IF NOT EXISTS products (id TEXT, title TEXT, price REAL)`
-
-	if _, err := db.Exec(q); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getNextId() (string, error) {
-	data, err := os.ReadFile(filePathLastId)
-	if err != nil {
-		return "", err
-	}
-
-	if string(data) == "" {
-		if err := util.WriteToFile(filePathLastId, "1"); err != nil {
-			return "", err
-		}
-
-		return "1", nil
-	}
-
-	idStr := strings.TrimSpace(string(data))
-
-	lastIdInt, err := strconv.Atoi(idStr)
-	if err != nil {
-		return "", err
-	}
-
-	nextIdInt := lastIdInt + 1
-
-	nextIdStr := strconv.Itoa(nextIdInt)
-
-	if err := util.WriteToFile(filePathLastId, nextIdStr); err != nil {
-		return "", err
-	}
-
-	return nextIdStr, nil
 }
