@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crud_product/app/transport/handlers"
+	handlers "crud_product/app/transport/handlers/product_handler"
 	"fmt"
 	"net/http"
 )
@@ -13,4 +13,5 @@ func main() {
 		fmt.Println("error -", err)
 		return
 	}
+
 }
