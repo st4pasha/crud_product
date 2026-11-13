@@ -1,7 +1,7 @@
 package product
 
 import (
-	"crud_product/app/models"
+	"crud_product/services/order/app/models"
 	"database/sql"
 	"errors"
 
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	pathDB         string = "app/data/products.db"
+	pathDB string = "app/data/products.db"
 )
 
 func Get() ([]models.Product, error) {
