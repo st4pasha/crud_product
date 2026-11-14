@@ -1,16 +1,18 @@
 package product
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
-	productservice "crud_product/app/service/product_service"
-	"crud_product/app/transport/dto"
+	productservice "crud_product/services/order/cmd/app/service/product_service"
+	"crud_product/services/order/cmd/app/transport/dto"
 )
 
 func handleGet(w http.ResponseWriter, _ *http.Request) {
@@ -28,6 +30,8 @@ func handleGet(w http.ResponseWriter, _ *http.Request) {
 
 func handlerCreate(w http.ResponseWriter, r *http.Request) {
 	var product dto.ProductToCreate
+	var available bool
+	var sucess bool
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -42,7 +46,59 @@ func handlerCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 
-	if err := writeJSON(w, 200, validProduct); err != nil {
+	client := getClient()
+
+	req, err := http.NewRequest("GET", "localhost:8081/products/check", nil)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	resp, err := client.Do(req)
+
+	if err := json.NewDecoder(resp.Body).Decode(&available); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if available == false {
+		if err := writeJSON(w, 409, available); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		return
+	}
+
+	validProductBytes, err := json.Marshal(validProduct)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	req, err = http.NewRequest("POST", "localhost:8081/products/reserve", bytes.NewBuffer(validProductBytes))
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	resp, err = client.Do(req)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&sucess); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if sucess == false {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := writeJSON(w, 201, sucess); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -57,7 +113,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 
 	productIDint, err := strconv.Atoi(productID)
 	if err != nil {
-		return 
+		return
 	}
 
 	err = productservice.Delete(productIDint)
@@ -87,7 +143,7 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	productIDint, err := strconv.Atoi(productID)
 	if err != nil {
-		return 
+		return
 	}
 
 	productUpdated, err := productservice.Update(productDTO, productIDint)
@@ -113,13 +169,13 @@ func handleGetById(w http.ResponseWriter, r *http.Request) {
 
 	productIDint, err := strconv.Atoi(productID)
 	if err != nil {
-		return 
+		return
 	}
 
 	productservice, err := productservice.GetById(productIDint)
 
 	if err != nil {
-		
+
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "{'error': productservice not found}", http.StatusBadRequest)
 			return
@@ -151,4 +207,10 @@ func writeJSON(w http.ResponseWriter, status int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
+}
+
+func getClient() *http.Client {
+	client := http.Client{Timeout: 5 * time.Second}
+
+	return &client
 }

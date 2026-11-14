@@ -1,7 +1,7 @@
 package product
 
 import (
-	"crud_product/services/order/app/models"
+	"crud_product/services/order/cmd/app/models"
 	"database/sql"
 	"errors"
 
