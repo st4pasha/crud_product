@@ -1,9 +1,9 @@
 package product
 
 import (
-	"crud_product/services/order/cmd/app/models"
-	productrepo "crud_product/services/order/cmd/app/repositories/product_repositories"
-	"crud_product/services/order/cmd/app/transport/dto"
+	"crud_product/services/order/cmd/internal/product/models"
+	productrepo "crud_product/services/order/cmd/internal/product/repositories"
+	"crud_product/services/order/cmd/internal/product/dto"
 	"database/sql"
 	"errors"
 )

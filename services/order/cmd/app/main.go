@@ -1,13 +1,13 @@
 package main
 
 import (
-	handlers "crud_product/services/order/cmd/app/transport/handlers/product_handler"
+	productHandlers "crud_product/services/order/cmd/internal/product/handlers"
 	"fmt"
 	"net/http"
 )
 
 func main() {
-	router := handlers.RegisterHandlers()
+	router := productHandlers.RegisterHandlers()
 
 	if err := http.ListenAndServe("localhost:8080", router); err != nil {
 		fmt.Println("error -", err)

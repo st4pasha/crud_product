@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"crud_product/services/warehouse/cmd/app/models"
+	"crud_product/services/warehouse/cmd/internal/warehouse/models"
 	"database/sql"
 	"errors"
 )

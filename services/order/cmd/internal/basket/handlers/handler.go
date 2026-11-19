@@ -1,10 +1,10 @@
 package basket
 
 import (
-	product "crud_product/services/order/cmd/app/repositories/product_repositories"
-	basket "crud_product/services/order/cmd/app/service/basket_service.go"
-	"crud_product/services/order/cmd/app/transport/dto"
-	"crud_product/services/order/cmd/app/util"
+	"crud_product/services/order/cmd/internal/basket/dto"
+	basket "crud_product/services/order/cmd/internal/basket/service"
+	product "crud_product/services/order/cmd/internal/product/repositories"
+	"crud_product/services/order/cmd/internal/util"
 	"encoding/json"
 	"net/http"
 )
@@ -32,5 +32,4 @@ func AddProductHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 }
