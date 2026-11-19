@@ -10,9 +10,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	productservice "crud_product/services/order/cmd/internal/product/service"
-	"crud_product/services/order/cmd/internal/product/dto"
-	"crud_product/services/order/cmd/internal/util"
+	productservice "crud_product/services/order/internal/product/service"
+	"crud_product/services/order/internal/product/dto"
+	"crud_product/services/order/internal/util"
 )
 
 func handleGet(w http.ResponseWriter, _ *http.Request) {

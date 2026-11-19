@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crud_product/services/warehouse/cmd/internal/warehouse/handlers"
+	"crud_product/services/warehouse/internal/warehouse/handlers"
 	"net/http"
 )
 

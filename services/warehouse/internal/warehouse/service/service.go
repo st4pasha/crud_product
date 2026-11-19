@@ -1,8 +1,8 @@
 package service
 
 import (
-	"crud_product/services/warehouse/cmd/internal/warehouse/models"
-	"crud_product/services/warehouse/cmd/internal/warehouse/repositories"
+	"crud_product/services/warehouse/internal/warehouse/models"
+	"crud_product/services/warehouse/internal/warehouse/repositories"
 )
 
 func CheckProductAvailability(product models.Product) error {
