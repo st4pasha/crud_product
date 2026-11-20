@@ -1,10 +1,10 @@
 package basket
 
 import (
-	"crud_product/services/order/cmd/internal/basket/dto"
-	basket "crud_product/services/order/cmd/internal/basket/service"
-	product "crud_product/services/order/cmd/internal/product/repositories"
-	"crud_product/services/order/cmd/internal/util"
+	"crud_product/services/order/internal/basket/dto"
+	basket "crud_product/services/order/internal/basket/service"
+	product "crud_product/services/order/internal/product/repositories"
+	"crud_product/services/order/internal/util"
 	"encoding/json"
 	"net/http"
 )
