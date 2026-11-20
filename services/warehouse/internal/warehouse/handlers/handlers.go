@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"crud_product/services/warehouse/cmd/app/models"
-	"crud_product/services/warehouse/cmd/app/service"
+	"crud_product/services/warehouse/internal/warehouse/models"
+	"crud_product/services/warehouse/internal/warehouse/service"
 	"encoding/json"
 	"net/http"
 
